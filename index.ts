@@ -266,11 +266,40 @@ async function runLoop(
     const replaceToken = (replacement: string) =>
       args.replace(FOR_TOKEN_RE, replacement);
 
-    // Send a message and wait for the agent to fully settle.
+    // Send a message into the *current* active session and wait for the agent
+    // to fully settle. Used for iteration 0 (sent into the origin session).
     const sendAndWait = async (value: string) => {
       const wait = waitForSettle();
       pi.sendUserMessage(replaceToken(value));
       await wait;
+    };
+
+    // Iterations 1..N-1 each fork into a *new session file*. Because forking
+    // disposes the previous session and invalidates the captured command ctx,
+    // we must NOT reuse `cmdCtx` across forks. Instead we fork from the live
+    // `ctx` passed in, and do all post-fork work inside the `withSession`
+    // callback, which receives a *fresh* `ReplacedSessionContext` (it even has
+    // its own `sendUserMessage`/`fork`). We then recurse using that fresh ctx
+    // for the next iteration — matching pi's documented fork pattern.
+    const forkChain = async (i: number, ctx: ExtensionCommandContext) => {
+      if (i >= total) return;
+      showHint(i, total, kindLabel, replacements[i]);
+
+      const swapped = waitForSessionStart("fork");
+      await ctx.fork(preLoopLeafId, {
+        position: "at",
+        withSession: async (ctx2) => {
+          // ctx2 is a fresh ReplacedSessionContext bound to the newly forked
+          // session (its type is inferred from fork()'s withSession signature).
+          const wait = waitForSettle();
+          ctx2.sendUserMessage(replaceToken(replacements[i]));
+          await wait;
+          // Continue the chain with the fresh context for the next iteration.
+          await forkChain(i + 1, ctx2);
+        },
+      });
+      // Wait until the runtime has actually switched to the new session file.
+      await swapped;
     };
 
     // Iteration 0 — sent into the current (origin) session, no fork. The origin
@@ -278,8 +307,9 @@ async function runLoop(
     showHint(0, total, kindLabel, replacements[0]);
     await sendAndWait(replacements[0]);
 
-    // No base message to fork from (empty session): degrade to plain sequential
-    // sends rather than throwing inside the fork call.
+    // No base message to fork from (empty session), or fork is unavailable in
+    // this mode: degrade to plain sequential sends rather than throwing inside
+    // the fork call.
     if (!preLoopLeafId || typeof cmdCtx.fork !== "function") {
       if (!preLoopLeafId) {
         cmdCtx.ui.notify(
@@ -299,25 +329,8 @@ async function runLoop(
       return;
     }
 
-    // Iterations 1..N-1 — fork into a *new session file* each time (so the
-    // session list shows one session per iteration). `ctx.fork()` switches the
-    // active runtime to a fresh session file containing only the pre-loop
-    // conversation (branched "at" the pre-loop leaf). The previous iteration's
-    // session is replaced while every iteration keeps the same base context.
-    for (let i = 1; i < total; i++) {
-      showHint(i, total, kindLabel, replacements[i]);
-
-      const swapped = waitForSessionStart("fork");
-      const result = await cmdCtx.fork(preLoopLeafId, { position: "at" });
-      if (result.cancelled) {
-        cmdCtx.ui.notify("pi-for: fork cancelled; stopping loop", "warning");
-        return;
-      }
-      // Wait until the runtime has actually switched to the new session file.
-      await swapped;
-
-      await sendAndWait(replacements[i]);
-    }
+    // Fork iterations 1..N-1, each into its own session file.
+    await forkChain(1, cmdCtx);
   } catch (err) {
     cmdCtx.ui.notify(
       `pi-for: loop error: ${err instanceof Error ? err.message : String(err)}`,
