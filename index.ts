@@ -5,23 +5,23 @@
  * ---------------------------------------------------------------------------
  * What it does
  * ---------------------------------------------------------------------------
- * Write a message that contains `$for@<path>` (dollar + "for" + at-sign +
+ * Write a message that contains `$each@<path>` (dollar + "each" + at-sign +
  * a file or directory path), then invoke it as the `/for` command, e.g.:
  *
- *     /for Please reword the skill in $for@./skills/ and make it more polite
+ *     /for Please reword the skill in $each@./skills/ and make it more polite
  *
- * While composing the message, typing `$for@` opens pi's fuzzy file/directory
+ * While composing the message, typing `$each@` opens pi's fuzzy file/directory
  * search (the same one `@` after a space opens) so you can pick a path. The
- * in-editor command becomes `$for@<file-or-dir>`.
+ * in-editor command becomes `$each@<file-or-dir>`.
  *
  * When the `/for` command runs, it executes a *prompt loop*:
  *
  *   - If the path points to a DIRECTORY, the loop iterates over every child
  *     element (files and subdirectories, excluding dotfiles). Each iteration
- *     replaces the full `$for@<dir>` token with `<dir>/<child>` (directories
+ *     replaces the full `$each@<dir>` token with `<dir>/<child>` (directories
  *     keep a trailing slash).
  *   - If the path points to a FILE, the loop iterates over every line of the
- *     file. Each iteration replaces the full `$for@<file>` token with the
+ *     file. Each iteration replaces the full `$each@<file>` token with the
  *     corresponding line.
  *
  * Iterations are strictly sequential (no parallelism). The first iteration is
@@ -46,10 +46,10 @@
  *   `sendUserMessage("/clone")` could never fork — `/clone` was just appended
  *   as a literal message into the same session. That is why the loop previously
  *   chained every iteration into one session. We now use the real `ctx.fork()`.
- * - The `$for@` fuzzy search reuses pi's built-in fuzzy file/directory provider
+ * - The `$each@` fuzzy search reuses pi's built-in fuzzy file/directory provider
  *   (`CombinedAutocompleteProvider.getFuzzyFileSuggestions`) via a wrapping
  *   `AutocompleteProvider`, plus a `readdir` fallback. The editor is extended so
- *   that typing `$for@` opens that search exactly as `@` after a space does.
+ *   that typing `$each@` opens that search exactly as `@` after a space does.
  */
 
 import type {
@@ -71,13 +71,13 @@ import type {
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
 
-// `$for@` followed by a (possibly empty) token of non-`@`, non-space characters.
+// `$each@` followed by a (possibly empty) token of non-`@`, non-space characters.
 // Used to detect the trigger while typing / at the cursor and to open the search.
-const FOR_CONTEXT_RE = /\$for@([^@\s]*)$/;
+const FOR_CONTEXT_RE = /\$each@([^@\s]*)$/;
 // Global variant used to find the token anywhere in a submitted message.
-const FOR_TOKEN_RE = /\$for@(\S+)/;
-// Bare trigger with no path (e.g. `$for@ ` or a message ending in `$for@`).
-const FOR_BARE_RE = /\$for@(?=\s|$)/;
+const FOR_TOKEN_RE = /\$each@(\S+)/;
+// Bare trigger with no path (e.g. `$each@ ` or a message ending in `$each@`).
+const FOR_BARE_RE = /\$each@(?=\s|$)/;
 
 const WIDGET_KEY = "pi-for";
 
@@ -231,7 +231,7 @@ async function runLoop(
     const m = args.match(FOR_TOKEN_RE);
     if (!m) {
       cmdCtx.ui.notify(
-        "pi-for: no $for@<path> token found. Example: /for Review $for@./src/",
+        "pi-for: no $each@<path> token found. Example: /for Review $each@./src/",
         "error",
       );
       return;
@@ -262,7 +262,7 @@ async function runLoop(
     // send iteration 0 (which would otherwise advance the leaf past it).
     const preLoopLeafId = cmdCtx.sessionManager.getLeafId();
 
-    // Replace the *full* `$for@<path>` token (not just the path) with the value.
+    // Replace the *full* `$each@<path>` token (not just the path) with the value.
     const replaceToken = (replacement: string) =>
       args.replace(FOR_TOKEN_RE, replacement);
 
@@ -348,7 +348,7 @@ async function runLoop(
 }
 
 // ---------------------------------------------------------------------------
-// Autocomplete provider: makes `$for@` open pi's fuzzy file/directory search.
+// Autocomplete provider: makes `$each@` open pi's fuzzy file/directory search.
 // ---------------------------------------------------------------------------
 
 class ForAutocompleteProvider implements AutocompleteProvider {
@@ -389,14 +389,14 @@ class ForAutocompleteProvider implements AutocompleteProvider {
     if (items.length === 0) items = this.fallback(partial, cwd);
 
     // Strip the leading "@" pi's fuzzy provider adds so we can re-prefix with
-    // `$for@` in applyCompletion.
+    // `$each@` in applyCompletion.
     const transformed: AutocompleteItem[] = items.map((it) => ({
       value: it.value && it.value.startsWith("@") ? it.value.slice(1) : it.value,
       label: it.label,
       description: it.description,
     }));
 
-    return { items: transformed, prefix: "$for@" + partial };
+    return { items: transformed, prefix: "$each@" + partial };
   }
 
   applyCompletion(
@@ -406,20 +406,20 @@ class ForAutocompleteProvider implements AutocompleteProvider {
     item: AutocompleteItem,
     prefix: string,
   ): { lines: string[]; cursorLine: number; cursorCol: number } {
-    if (prefix.startsWith("$for@")) {
+    if (prefix.startsWith("$each@")) {
       const currentLine = lines[cursorLine] ?? "";
       const beforePrefix = currentLine.slice(0, cursorCol - prefix.length);
       const afterCursor = currentLine.slice(cursorCol);
       // Don't add a space after directories so the user can keep autocompleting.
       const isDir = item.label.endsWith("/");
       const suffix = isDir ? "" : " ";
-      const newLine = beforePrefix + "$for@" + item.value + suffix + afterCursor;
+      const newLine = beforePrefix + "$each@" + item.value + suffix + afterCursor;
       const newLines = lines.slice();
       newLines[cursorLine] = newLine;
       return {
         lines: newLines,
         cursorLine,
-        cursorCol: beforePrefix.length + "$for@".length + item.value.length + suffix.length,
+        cursorCol: beforePrefix.length + "$each@".length + item.value.length + suffix.length,
       };
     }
     return this.current.applyCompletion(lines, cursorLine, cursorCol, item, prefix);
@@ -506,7 +506,7 @@ class ForAutocompleteProvider implements AutocompleteProvider {
 }
 
 // ---------------------------------------------------------------------------
-// Editor: extends the default editor so that typing `$for@` opens the search.
+// Editor: extends the default editor so that typing `$each@` opens the search.
 // ---------------------------------------------------------------------------
 
 class ForEditor extends CustomEditor {
@@ -521,7 +521,7 @@ class ForEditor extends CustomEditor {
       const before = (lines[line] ?? "").slice(0, col);
       if (FOR_CONTEXT_RE.test(before) && !this.isShowingAutocomplete()) {
         // The built-in trigger only fires when `@` follows a space/tab, so we
-        // explicitly open the autocomplete for the `$for@` context. Once open,
+        // explicitly open the autocomplete for the `$each@` context. Once open,
         // the editor keeps it updated as the user keeps typing.
         const trigger = (
           this as unknown as { tryTriggerAutocomplete?: () => void }
@@ -544,14 +544,14 @@ export default function (pi: ExtensionAPI) {
   // the per-iteration fork into separate session files possible.
   pi.registerCommand("for", {
     description:
-      "Run a prompt loop: fork a new session per iteration over a directory or file referenced by a $for@<path> token.",
+      "Run a prompt loop: fork a new session per iteration over a directory or file referenced by a $each@<path> token.",
     handler: async (args: string, cmdCtx: ExtensionCommandContext) => {
       await runLoop(pi, args, cmdCtx);
     },
   });
 
-  // Wrap the active autocomplete provider so `$for@` opens the file search, and
-  // extend the editor so typing `$for@` triggers the search. The wrapper list is
+  // Wrap the active autocomplete provider so `$each@` opens the file search, and
+  // extend the editor so typing `$each@` triggers the search. The wrapper list is
   // reset on every session rebind (including forks), so re-wrapping here is safe
   // and never nests.
   pi.on("session_start", (_event, ctx) => {
@@ -586,7 +586,7 @@ export default function (pi: ExtensionAPI) {
     settleWaiters = [];
   });
 
-  // Guard against the old `$for@`-as-a-plain-message syntax. A `$for@<path>`
+  // Guard against the old `$each@`-as-a-plain-message syntax. A `$each@<path>`
   // token only works inside the `/for` command now; if a user submits it as a
   // normal message we explain the new invocation instead of silently sending an
   // unresolved token to the model.
@@ -599,14 +599,14 @@ export default function (pi: ExtensionAPI) {
 
     if (FOR_TOKEN_RE.test(text)) {
       ctx.ui.notify(
-        "pi-for: use the /for command — e.g. /for Review $for@./src/",
+        "pi-for: use the /for command — e.g. /for Review $each@./src/",
         "warning",
       );
       return { action: "handled" };
     }
 
     if (FOR_BARE_RE.test(text)) {
-      ctx.ui.notify("pi-for: $for@ needs a file or directory path", "warning");
+      ctx.ui.notify("pi-for: $each@ needs a file or directory path", "warning");
       return { action: "handled" };
     }
 

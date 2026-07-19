@@ -6,25 +6,25 @@ lines.
 
 ## What it does
 
-Compose a message that contains a `$for@<path>` token (dollar + `for` + at-sign
+Compose a message that contains a `$each@<path>` token (dollar + `each` + at-sign
 + a file or directory path), then invoke it as the **`/for` command**:
 
 ```
-/for Please reword the skill in $for@./skills/ and make it more polite
+/for Please reword the skill in $each@./skills/ and make it more polite
 ```
 
-While composing the message, typing `$for@` opens pi's fuzzy file/directory
+While composing the message, typing `$each@` opens pi's fuzzy file/directory
 search (the same one `@` after a space opens) so you can pick a path. The token
-becomes `$for@<file-or-dir>`.
+becomes `$each@<file-or-dir>`.
 
 When the `/for` command runs, it executes a **prompt loop**:
 
 - **Directory** — if the path points to a directory, the loop iterates over all
   of its child elements (files and subdirectories, excluding dotfiles). Each
-  iteration replaces the full `$for@<dir>` token with `<dir>/<child>` (directories
-  keep a trailing slash), e.g. `$for@./skills/` → `./skills/karate/`.
+  iteration replaces the full `$each@<dir>` token with `<dir>/<child>` (directories
+  keep a trailing slash), e.g. `$each@./skills/` → `./skills/karate/`.
 - **File (lines)** — if the path points to a file, the loop iterates over every
-  line of the file. Each iteration replaces the full `$for@<file>` token with the
+  line of the file. Each iteration replaces the full `$each@<file>` token with the
   corresponding line.
 
 Iterations run strictly sequentially (no parallelism). The first iteration is
@@ -48,7 +48,7 @@ Given two subdirectories `karate` and `baking` inside `./skills/`:
 ```
 User:  Have a look at the readme
 Pi:    (acknowledges)
-User:  /for Please reword the skill in $for@./skills/ and make it more polite
+User:  /for Please reword the skill in $each@./skills/ and make it more polite
 ```
 
 This expands to:
@@ -72,7 +72,7 @@ iteration.
   `input`/`session_start` handlers) does not expose it. So the loop runs inside
   the `/for` command handler, where `cmdCtx.fork()` is available.
 - The submitted message must start with `/for` so that pi's command pipeline
-  routes it to the handler. A bare `$for@<path>` message submitted as a normal
+  routes it to the handler. A bare `$each@<path>` message submitted as a normal
   message is not a command and is intercepted with a hint to use `/for`.
 - **Why the old approach failed:** `ExtensionAPI.sendUserMessage()` internally
   calls `prompt(text, { expandPromptTemplates: false, … })`, and pi only runs
@@ -81,10 +81,10 @@ iteration.
   appended as a literal user message into the *same* session, which is why every
   iteration chained linearly into one session. The fix uses the real
   `ctx.fork()` instead.
-- The `$for@` fuzzy search reuses pi's built-in fuzzy file/directory provider
+- The `$each@` fuzzy search reuses pi's built-in fuzzy file/directory provider
   (`CombinedAutocompleteProvider.getFuzzyFileSuggestions`) via a wrapping
   `AutocompleteProvider`, with a `readdir` fallback. The editor is extended so
-  that typing `$for@` opens that search exactly as `@` after a space does.
+  that typing `$each@` opens that search exactly as `@` after a space does.
 - The full token — starting at the dollar sign and including `for`, `@` and the
   path, up to (but not including) the first following whitespace — is replaced by
   the iteration value. Not just the path.
