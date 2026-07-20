@@ -108,7 +108,7 @@ iteration.
 ## Install
 
 ```bash
-pi install npm:pi-for
+pi install npm:pi-for-each
 ```
 
 To try it without installing (from a clone):
