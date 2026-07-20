@@ -4,6 +4,18 @@ A [pi](https://github.com/earendil-works/pi) extension that adds a `/for`
 prompt-loop command with variable insertion over directory children or file
 lines.
 
+## Demo
+
+![](https://raw.githubusercontent.com/jejay/pi-for/main/demo-imgs/pi-for-demo-1.png)
+![](https://raw.githubusercontent.com/jejay/pi-for/main/demo-imgs/pi-for-demo-2.png)
+![](https://raw.githubusercontent.com/jejay/pi-for/main/demo-imgs/pi-for-demo-3.png)
+![](https://raw.githubusercontent.com/jejay/pi-for/main/demo-imgs/pi-for-demo-4.png)
+![](https://raw.githubusercontent.com/jejay/pi-for/main/demo-imgs/pi-for-demo-5.png)
+![](https://raw.githubusercontent.com/jejay/pi-for/main/demo-imgs/pi-for-demo-6.png)
+![](https://raw.githubusercontent.com/jejay/pi-for/main/demo-imgs/pi-for-demo-7.png)
+![](https://raw.githubusercontent.com/jejay/pi-for/main/demo-imgs/pi-for-demo-8.png)
+![](https://raw.githubusercontent.com/jejay/pi-for/main/demo-imgs/pi-for-demo-9.png)
+
 ## What it does
 
 Compose a message that contains a `$each@<path>` token (dollar + `each` + at-sign
