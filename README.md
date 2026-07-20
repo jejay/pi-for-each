@@ -1,7 +1,7 @@
-# pi-for
+# pi-for-each
 
 A [pi](https://github.com/earendil-works/pi) extension that adds a `/for`
-prompt-loop command with variable insertion over directory children or file
+prompt-loop command with $each variable insertion over directory children or file
 lines.
 
 ## Why
