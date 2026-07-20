@@ -1,12 +1,10 @@
 # pi-for-each
 
-A [pi](https://github.com/earendil-works/pi) extension that adds a `/for`
-prompt-loop command with $each variable insertion over directory children or file
-lines.
+A [pi](https://github.com/earendil-works/pi) extension that adds a `/for`-`$each` prompt loop – and hides it from your LLM!. Supports children-in-directory and line-in-files iteration.
 
 ## Why
 
-Like subagents but much simpler, sequential and with more control for the user. Instead of describing the loop to the agent, just make a loop. No need to tell the agent about your control structure if you already know the control structure.
+Like subagents but much simpler, sequential and with more control for the user. Instead of describing the loop to the agent, just make a loop. No need to tell the agent about your control structure if you already know the control structure. Each iteration the LLM only sees the necessary context and the iteration prompt, no other iterations. This prevents bias drift or context rot compared to a loop that repeats commands and execution within the same context.
 
 ## Demo
 
