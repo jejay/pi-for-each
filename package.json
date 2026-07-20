@@ -1,6 +1,6 @@
 {
   "name": "pi-for-each",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "pi extension: a $each@ prompt-loop editor feature with variable insertion over directory children or file lines.",
   "type": "module",
   "keywords": [
