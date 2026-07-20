@@ -1,6 +1,6 @@
 # pi-for-each
 
-A [pi](https://github.com/earendil-works/pi) extension that adds a `/for`-`$each` prompt loop – and hides it from your LLM!. Supports children-in-directory and line-in-files iteration.
+A [pi](https://github.com/earendil-works/pi) extension that adds a `/for`-`$each` prompt loop – and hides it from your LLM! Supports children-in-directory and line-in-files iteration.
 
 ## Why
 
