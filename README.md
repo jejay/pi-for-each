@@ -10,15 +10,15 @@ Like subagents but much simpler, sequential and with more control for the user. 
 
 ## Demo
 
-![](https://raw.githubusercontent.com/jejay/pi-for/main/demo-imgs/pi-for-demo-1.png)
-![](https://raw.githubusercontent.com/jejay/pi-for/main/demo-imgs/pi-for-demo-2.png)
-![](https://raw.githubusercontent.com/jejay/pi-for/main/demo-imgs/pi-for-demo-3.png)
-![](https://raw.githubusercontent.com/jejay/pi-for/main/demo-imgs/pi-for-demo-4.png)
-![](https://raw.githubusercontent.com/jejay/pi-for/main/demo-imgs/pi-for-demo-5.png)
-![](https://raw.githubusercontent.com/jejay/pi-for/main/demo-imgs/pi-for-demo-6.png)
-![](https://raw.githubusercontent.com/jejay/pi-for/main/demo-imgs/pi-for-demo-7.png)
-![](https://raw.githubusercontent.com/jejay/pi-for/main/demo-imgs/pi-for-demo-8.png)
-![](https://raw.githubusercontent.com/jejay/pi-for/main/demo-imgs/pi-for-demo-9.png)
+![](https://raw.githubusercontent.com/jejay/pi-for-each/main/demo-imgs/pi-for-demo-1.png)
+![](https://raw.githubusercontent.com/jejay/pi-for-each/main/demo-imgs/pi-for-demo-2.png)
+![](https://raw.githubusercontent.com/jejay/pi-for-each/main/demo-imgs/pi-for-demo-3.png)
+![](https://raw.githubusercontent.com/jejay/pi-for-each/main/demo-imgs/pi-for-demo-4.png)
+![](https://raw.githubusercontent.com/jejay/pi-for-each/main/demo-imgs/pi-for-demo-5.png)
+![](https://raw.githubusercontent.com/jejay/pi-for-each/main/demo-imgs/pi-for-demo-6.png)
+![](https://raw.githubusercontent.com/jejay/pi-for-each/main/demo-imgs/pi-for-demo-7.png)
+![](https://raw.githubusercontent.com/jejay/pi-for-each/main/demo-imgs/pi-for-demo-8.png)
+![](https://raw.githubusercontent.com/jejay/pi-for-each/main/demo-imgs/pi-for-demo-9.png)
 
 ## What it does
 

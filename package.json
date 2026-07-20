@@ -1,5 +1,5 @@
 {
-  "name": "pi-for",
+  "name": "pi-for-each",
   "version": "0.1.0",
   "description": "pi extension: a $each@ prompt-loop editor feature with variable insertion over directory children or file lines.",
   "type": "module",
@@ -13,9 +13,9 @@
   "author": "jejay",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jejay/pi-for.git"
+    "url": "git+https://github.com/jejay/pi-for-each.git"
   },
-  "homepage": "https://github.com/jejay/pi-for#readme",
+  "homepage": "https://github.com/jejay/pi-for-each#readme",
   "main": "index.ts",
   "files": [
     "index.ts",
@@ -31,6 +31,6 @@
     "extensions": [
       "./index.ts"
     ],
-    "image": "https://raw.githubusercontent.com/jejay/pi-for/main/pi-for-preview.png"
+    "image": "https://raw.githubusercontent.com/jejay/pi-for-each/main/pi-for-preview.png"
   }
 }
