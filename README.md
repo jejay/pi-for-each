@@ -20,7 +20,7 @@ Like subagents but much simpler, sequential and with more control for the user. 
 
 ## What it does
 
-Compose a message that contains a `$each@<path>` token (dollar + `each` + at-sign + a file or directory path), then invoke it as the **`/for` command**:
+Invoke the **`/for` command** together with a prompt/message that contains a `$each@<path>` token (dollar + `each` + at-sign + a file or directory path):
 
 ```
 /for Please reword the skill in $each@./skills/ and make it more polite
