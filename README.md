@@ -22,8 +22,7 @@ Like subagents but much simpler, sequential and with more control for the user. 
 
 ## What it does
 
-Compose a message that contains a `$each@<path>` token (dollar + `each` + at-sign
-+ a file or directory path), then invoke it as the **`/for` command**:
+Compose a message that contains a `$each@<path>` token (dollar + `each` + at-sign + a file or directory path), then invoke it as the **`/for` command**:
 
 ```
 /for Please reword the skill in $each@./skills/ and make it more polite
@@ -90,18 +89,11 @@ iteration.
 - The submitted message must start with `/for` so that pi's command pipeline
   routes it to the handler. A bare `$each@<path>` message submitted as a normal
   message is not a command and is intercepted with a hint to use `/for`.
-- **Why the old approach failed:** `ExtensionAPI.sendUserMessage()` internally
-  calls `prompt(text, { expandPromptTemplates: false, … })`, and pi only runs
-  slash/extension commands when `expandPromptTemplates` is true. So sending
-  `"/clone"` via `sendUserMessage` never executed the command — it was just
-  appended as a literal user message into the *same* session, which is why every
-  iteration chained linearly into one session. The fix uses the real
-  `ctx.fork()` instead.
 - The `$each@` fuzzy search reuses pi's built-in fuzzy file/directory provider
   (`CombinedAutocompleteProvider.getFuzzyFileSuggestions`) via a wrapping
   `AutocompleteProvider`, with a `readdir` fallback. The editor is extended so
   that typing `$each@` opens that search exactly as `@` after a space does.
-- The full token — starting at the dollar sign and including `for`, `@` and the
+- The full token — starting at the dollar sign and including `each`, `@` and the
   path, up to (but not including) the first following whitespace — is replaced by
   the iteration value. Not just the path.
 
