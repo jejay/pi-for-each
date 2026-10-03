@@ -57,6 +57,7 @@ import type {
   ExtensionCommandContext,
   InputEvent,
   InputEventResult,
+  KeybindingsManager,
 } from "@earendil-works/pi-coding-agent";
 import { CustomEditor } from "@earendil-works/pi-coding-agent";
 import type {
@@ -65,10 +66,9 @@ import type {
   AutocompleteSuggestions,
   EditorComponent,
   EditorTheme,
-  KeybindingsManager,
   TUI,
 } from "@earendil-works/pi-tui";
-import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
+import { type Dirent, existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
 
 // `$each@` followed by a (possibly empty) token of non-`@`, non-space characters.
@@ -468,13 +468,16 @@ class ForAutocompleteProvider implements AutocompleteProvider {
       searchPrefix = basename(partial);
     }
 
-    let entries: ReturnType<typeof readdirSync> | undefined;
+    let entries: Dirent[];
     try {
       entries = readdirSync(searchDir, { withFileTypes: true });
     } catch {
       return [];
     }
 
+    // Keep the directory portion of the typed token when replacing the full
+    // prefix, including relative spellings such as "./" and "../".
+    const completionDir = partial.slice(0, partial.length - searchPrefix.length);
     const items: AutocompleteItem[] = [];
     for (const e of entries) {
       if (e.name === "." || e.name === "..") continue;
@@ -488,7 +491,7 @@ class ForAutocompleteProvider implements AutocompleteProvider {
           /* ignore */
         }
       }
-      const value = isDir ? e.name + "/" : e.name;
+      const value = childReplacement(completionDir, e.name, isDir);
       items.push({
         value,
         label: isDir ? e.name + "/" : e.name,
