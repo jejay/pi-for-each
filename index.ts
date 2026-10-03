@@ -46,27 +46,21 @@
  *   `sendUserMessage("/clone")` could never fork — `/clone` was just appended
  *   as a literal message into the same session. That is why the loop previously
  *   chained every iteration into one session. We now use the real `ctx.fork()`.
- * - The `$each@` fuzzy search reuses pi's built-in fuzzy file/directory provider
- *   (`CombinedAutocompleteProvider.getFuzzyFileSuggestions`) via a wrapping
- *   `AutocompleteProvider`, plus a `readdir` fallback. The editor is extended so
- *   that typing `$each@` opens that search exactly as `@` after a space does.
+ * - The `$each@` fuzzy search requests normal `@` completion through the public
+ *   `AutocompleteProvider.getSuggestions()` interface, plus a `readdir`
+ *   fallback. Declaring `$` as an autocomplete trigger keeps pi's own editor
+ *   and its native working/status indicators intact.
  */
 
 import type {
   ExtensionAPI,
   ExtensionCommandContext,
-  InputEvent,
   InputEventResult,
-  KeybindingsManager,
 } from "@earendil-works/pi-coding-agent";
-import { CustomEditor } from "@earendil-works/pi-coding-agent";
 import type {
   AutocompleteItem,
   AutocompleteProvider,
   AutocompleteSuggestions,
-  EditorComponent,
-  EditorTheme,
-  TUI,
 } from "@earendil-works/pi-tui";
 import { type Dirent, existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { basename, dirname, join, resolve } from "node:path";
@@ -352,13 +346,16 @@ async function runLoop(
 // ---------------------------------------------------------------------------
 
 class ForAutocompleteProvider implements AutocompleteProvider {
-  triggerCharacters = ["@", "#"];
+  readonly triggerCharacters: string[];
   private readonly current: AutocompleteProvider;
   private readonly getCwd: () => string;
 
   constructor(current: AutocompleteProvider, getCwd: () => string) {
     this.current = current;
     this.getCwd = getCwd;
+    this.triggerCharacters = [
+      ...new Set(["@", "#", "$", ...(current.triggerCharacters ?? [])]),
+    ];
   }
 
   shouldTriggerFileCompletion(
@@ -425,21 +422,15 @@ class ForAutocompleteProvider implements AutocompleteProvider {
     return this.current.applyCompletion(lines, cursorLine, cursorCol, item, prefix);
   }
 
-  /** Delegate to pi's real fuzzy file/directory search when available. */
+  /** Request pi's normal `@` path search through the public provider API. */
   private async fuzzy(
     partial: string,
     options: { signal: AbortSignal; force?: boolean },
   ): Promise<AutocompleteItem[]> {
-    const fn = (this.current as unknown as {
-      getFuzzyFileSuggestions?: (
-        query: string,
-        opts: { signal: AbortSignal; isQuotedPrefix?: boolean },
-      ) => Promise<AutocompleteItem[] | null>;
-    }).getFuzzyFileSuggestions;
-    if (typeof fn !== "function") return [];
     try {
-      const res = await fn.call(this.current, partial, { signal: options.signal });
-      return res ?? [];
+      const query = "@" + partial;
+      const res = await this.current.getSuggestions([query], 0, query.length, options);
+      return res?.items ?? [];
     } catch {
       return [];
     }
@@ -509,35 +500,6 @@ class ForAutocompleteProvider implements AutocompleteProvider {
 }
 
 // ---------------------------------------------------------------------------
-// Editor: extends the default editor so that typing `$each@` opens the search.
-// ---------------------------------------------------------------------------
-
-class ForEditor extends CustomEditor {
-  handleInput(data: string): void {
-    // Let the default editor handle everything (typing, native `@` after space,
-    // autocomplete continuation, etc.).
-    super.handleInput(data);
-
-    try {
-      const { line, col } = this.getCursor();
-      const lines = this.getLines();
-      const before = (lines[line] ?? "").slice(0, col);
-      if (FOR_CONTEXT_RE.test(before) && !this.isShowingAutocomplete()) {
-        // The built-in trigger only fires when `@` follows a space/tab, so we
-        // explicitly open the autocomplete for the `$each@` context. Once open,
-        // the editor keeps it updated as the user keeps typing.
-        const trigger = (
-          this as unknown as { tryTriggerAutocomplete?: () => void }
-        ).tryTriggerAutocomplete;
-        if (typeof trigger === "function") trigger.call(this);
-      }
-    } catch {
-      // Never let autocomplete wiring break normal editing.
-    }
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Extension entry point
 // ---------------------------------------------------------------------------
 
@@ -553,19 +515,14 @@ export default function (pi: ExtensionAPI) {
     },
   });
 
-  // Wrap the active autocomplete provider so `$each@` opens the file search, and
-  // extend the editor so typing `$each@` triggers the search. The wrapper list is
-  // reset on every session rebind (including forks), so re-wrapping here is safe
-  // and never nests.
+  // Wrap autocomplete without replacing pi's editor. The wrapper list is reset
+  // on every session rebind (including forks), so re-wrapping here is safe and
+  // never nests.
   pi.on("session_start", (_event, ctx) => {
     wordCwd = ctx.cwd;
     currentCtx = ctx as ExtensionCommandContext;
     ctx.ui.addAutocompleteProvider(
       (current) => new ForAutocompleteProvider(current, () => wordCwd),
-    );
-    ctx.ui.setEditorComponent(
-      (tui: TUI, theme: EditorTheme, keybindings: KeybindingsManager): EditorComponent =>
-        new ForEditor(tui, theme, keybindings),
     );
     // Notify any pending loop that the session switched (e.g. after a fork).
     const waiters = sessionStartWaiters;

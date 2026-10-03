@@ -95,10 +95,11 @@ iteration.
 - The submitted message must start with `/for` so that pi's command pipeline
   routes it to the handler. A bare `$each@<path>` message submitted as a normal
   message is not a command and is intercepted with a hint to use `/for`.
-- The `$each@` fuzzy search reuses pi's built-in fuzzy file/directory provider
-  (`CombinedAutocompleteProvider.getFuzzyFileSuggestions`) via a wrapping
-  `AutocompleteProvider`, with a `readdir` fallback. The editor is extended so
-  that typing `$each@` opens that search exactly as `@` after a space does.
+- The `$each@` fuzzy search requests normal `@` path completion through pi's
+  public `AutocompleteProvider.getSuggestions()` interface, with a `readdir`
+  fallback. The provider declares `$` as an autocomplete trigger without
+  replacing pi's editor, preserving its native working/status indicators and
+  shortcuts.
 - The full token — starting at the dollar sign and including `each`, `@` and the
   path, up to (but not including) the first following whitespace — is replaced by
   the iteration value. Not just the path.
